@@ -1,0 +1,87 @@
+---
+title: "PA1_template.Rmd"
+author: "Duncan Simon"
+date: "9 November 2018"
+output: 
+  html_document: 
+    keep_md: yes
+---
+
+
+
+## Loading and preprocessing the data
+
+
+```r
+activityData <- read.csv("activity.csv")
+```
+
+## What is mean total number of steps taken per day?
+
+```r
+# Total steps per day as histogram; mean and median reported
+stepsPerDay <- aggregate(steps ~ date, activityData, sum)
+hist(stepsPerDay$steps, main="Total Steps Per Day", xlab="Number of Steps")
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-2-1.png)<!-- -->
+
+```r
+meanSteps <- mean(stepsPerDay$steps)
+medianSteps <- median(stepsPerDay$steps)
+```
+* Mean: 1.0766189\times 10^{4}
+* Median: 10765
+
+## What is the average daily activity pattern?
+
+```r
+# Average daily pattern activity; max steps reported
+meanActivity <- aggregate(steps ~ interval, activityData, mean)
+plot(meanActivity$interval, meanActivity$steps, type="l", main="Average number of steps per time interval", ylab="Mean Steps", xlab="Interval (Minutes)")
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
+
+```r
+maxInterval <- meanActivity[which.max(meanActivity$steps), 1]
+```
+* Most steps at interval: 835
+
+## Imputing missing values
+
+```r
+# Number of NA rows
+NARows <- sum(is.na(activityData$steps))
+```
+* Number of NA rows: 2304
+
+
+```r
+# Fill NAs with mean for that interval, plot total steps per day as histogram
+# Mean and median reported
+imputedActivityData <- transform(activityData, steps=ifelse(is.na(activityData$steps), meanActivity$steps[match(activityData$interval, meanActivity$interval)], activityData$steps))
+imputedStepsPerDay <- aggregate(steps ~ date, imputedActivityData, sum)
+hist(imputedStepsPerDay$steps, main="Total Steps Per Day", xlab="Number of Steps")
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+
+```r
+meanStepsImputed <- mean(imputedStepsPerDay$steps)
+medianStepsImputed <- median(imputedStepsPerDay$steps)
+```
+* Mean (imputed): 1.0766189\times 10^{4}
+* Median (imputed): 1.0766189\times 10^{4}
+
+## Are there differences in activity patterns between weekdays and weekends?
+
+```r
+## Differences in weekday and weekend activity patterns
+weekendDays <- c("Saturday", "Sunday")
+imputedActivityData$weekday <- as.factor(ifelse(is.element(weekdays(as.Date(imputedActivityData$date)), weekendDays), "Weekend", "Weekday"))
+imputedMeanActivity <- aggregate(steps ~ interval + weekday, imputedActivityData, mean)
+xyplot(imputedMeanActivity$steps ~ imputedMeanActivity$interval|imputedMeanActivity$weekday, main="Average Steps per Day Type, by Interval",xlab="Interval", ylab="Number of Steps",layout=c(1,2), type="l")
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
